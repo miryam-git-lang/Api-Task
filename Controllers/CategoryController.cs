@@ -48,9 +48,9 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, Category category)
+    public async Task<IActionResult> Put([FromRoute]int id, [FromBody]CategoryPutDto categoryPutDto)
     {
-        if (id != category.Id)
+        if (id != categoryPutDto.Id)
         {
             return BadRequest("Category ID mismatch.");
         }
@@ -61,14 +61,12 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
             return NotFound();
         }
 
-        if (await context.Categories.AnyAsync(c => c.Name == category.Name))
+        if (await context.Categories.AnyAsync(c => c.Name == categoryPutDto.Name))
         {
             return BadRequest("Category with the same name already exists.");
         }
 
-        existingCategory.Name = category.Name;
-        existingCategory.Description = category.Description;
-        existingCategory.UpdatedAt = DateTime.UtcNow;
+        mapper.Map(categoryPutDto, existingCategory);
         await context.SaveChangesAsync();
         return NoContent();
     }
