@@ -6,4 +6,12 @@ public class ProductReturnDto
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public int CategoryId { get; set; }
+    public CategoryInProductReturnDto? Category { get; set; }
+    
+}
+
+public class CategoryInProductReturnDto
+{
+    public string Name { get; set; } = null!;
+    public string? Description { get; set; }
 }

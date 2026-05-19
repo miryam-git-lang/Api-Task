@@ -23,7 +23,10 @@ public class ProductController(AppDbContext context, IMapper mapper) : Controlle
     [HttpGet("{id}")]
     public async Task <IActionResult> Get(int id)
     {
-        var product = await context.Products.FindAsync(id);
+        var product = await context.Products
+            .Where(p => p.Id == id)
+            .ProjectTo<ProductReturnDto>(mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync();
         if (product == null)
         {
             return NotFound();

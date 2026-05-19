@@ -162,3 +162,4 @@
 /Users/miriam/Desktop/Academy Tasks/Backend/Api Task/MyApi/bin/Debug/net10.0/AutoMapper.dll
 /Users/miriam/Desktop/Academy Tasks/Backend/Api Task/MyApi/bin/Debug/net10.0/AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 /Users/miriam/Desktop/Academy Tasks/Backend/Api Task/MyApi/obj/Debug/net10.0/MyApi.sourcelink.json
+/Users/miriam/Desktop/Academy Tasks/Backend/Api Task/MyApi/bin/Debug/net10.0/MyApi.staticwebassets.runtime.json

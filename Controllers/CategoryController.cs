@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyApi.Data;
@@ -13,16 +14,27 @@ namespace MyApi.Controllers;
 public class CategoryController(AppDbContext context, IMapper mapper) : Controller
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Category>>> Get()
+    public async Task<ActionResult> Get([FromQuery]int page= 1, int take = 2)
     {
-        var categories = await context.Categories.ToListAsync();
-        var categoryReturnDtos = mapper.Map<List<CategoryReturnDto>>(categories);
-        return Ok(categoryReturnDtos);
+        var data = await context.Categories.
+        ProjectTo<CategoryReturnDto>(mapper.ConfigurationProvider)
+            .Skip((page - 1) * take)
+            .Take(take)
+            .ToListAsync();
+        var categoryPaginationDto = new CategoryPaginationDto()
+        {
+            Page = page,
+            Take = take,
+            TotalCount = await context.Categories.CountAsync(),
+            Categories = data
+        };
+        return Ok(categoryPaginationDto);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<CategoryReturnDto>> Get(int id)
     {
+        var request = HttpContext.Request;
         var category = await context.Categories.FindAsync(id);
         if (category == null)
         {
@@ -34,7 +46,7 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     }
 
     [HttpPost]
-    public async Task<ActionResult<Category>> Post(CategoryCreateDto categoryCreateDto)
+    public async Task<ActionResult<Category>> Post([FromForm]CategoryCreateDto categoryCreateDto)
     {
         if (await context.Categories.AnyAsync(c => c.Name == categoryCreateDto.Name))
         {
@@ -48,9 +60,9 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put([FromRoute]int id, [FromBody]CategoryPutDto categoryPutDto)
+    public async Task<IActionResult> Put([FromRoute]int id, [FromBody]CategoryUpdateDto categoryUpdateDto)
     {
-        if (id != categoryPutDto.Id)
+        if (id != categoryUpdateDto.Id)
         {
             return BadRequest("Category ID mismatch.");
         }
@@ -61,12 +73,12 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
             return NotFound();
         }
 
-        if (await context.Categories.AnyAsync(c => c.Name == categoryPutDto.Name))
+        if (await context.Categories.AnyAsync(c => c.Name == categoryUpdateDto.Name))
         {
             return BadRequest("Category with the same name already exists.");
         }
 
-        mapper.Map(categoryPutDto, existingCategory);
+        mapper.Map(categoryUpdateDto, existingCategory);
         await context.SaveChangesAsync();
         return NoContent();
     }
@@ -86,16 +98,16 @@ public class CategoryController(AppDbContext context, IMapper mapper) : Controll
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> Patch(int id, CategoryPatchDto categoryPatchDto)
+    public async Task<IActionResult> Patch(int id, [FromBody] CategoryUpdateDto categoryUpdateDto)
     {
         var existingCategory = await context.Categories.FindAsync(id);
         if (existingCategory == null)
         {
             return NotFound();
         }
-        if (!string.IsNullOrEmpty(categoryPatchDto.Description))
+        if (!string.IsNullOrEmpty(categoryUpdateDto.Description))
         {
-            existingCategory.Description = categoryPatchDto.Description;
+            existingCategory.Description = categoryUpdateDto.Description;
             existingCategory.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
         }
